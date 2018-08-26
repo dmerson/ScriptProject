@@ -8,11 +8,14 @@ library(rvest)
 library(readr)
 library(stringi)
 library(stringr)
-
-script <- read_html("Screenplays/War for the Planet of the Apes Script at IMSDb..html") %>%
-              html_node("pre") %>%
-              html_text()
-script_lines <-read_lines(script)
+read_imsdb_file_into_lines <- function(path){
+  script <- read_html(path) %>%
+    html_node("pre") %>%
+    html_text()
+  script_lines <-read_lines(script)
+  return (script_lines)
+}
+View(read_imsdb_file_into_lines("Screenplays/War for the Planet of the Apes Script at IMSDb..html"))
 
 #scene_example="1   EXT./INT.   TAXI CAB - MORNING                                        1"
 SCENE <-RegWhy.Statement(c(
@@ -173,7 +176,7 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     
   ))
   
-  
+create_script_df <-function(){  
   last_line_type = ""
   current_title = "War for the Planet of the Apes"
   current_scene = ""
@@ -190,8 +193,6 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     dialogue = character(),
     stringsAsFactors = FALSE
   )
-  #script_df <-c("","","","","")
-  #script_lines=la_la_script_lines
   last_line_of_title_card="FADE IN..."
   len_of_script = length(script_lines)
   start_of_script=FALSE
@@ -365,7 +366,7 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     script_df$current_character_plus_direction <- as.character(script_df$current_character_plus_direction)
     script_df$current_dialogue <- as.character(script_df$current_dialogue)
   }
-#  return (script_df)
-#}
+  return (script_df)
+}
 
-#View(run_script("Big Fish","Screenplays/Big-Fish.fountain.txt"))
+
