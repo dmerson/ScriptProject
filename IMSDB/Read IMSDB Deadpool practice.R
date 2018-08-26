@@ -187,8 +187,15 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     RegWhy.Where.EndOfString
     
   ))
+  PRECEDING_SPACE <- RegWhy.Statement(c(
+    RegWhy.Where.StartOfString,
+    RegWhy.CharacterType.Whitespace,
+    RegWhy.Count.OneOrMore
+    
+  ))
+  
   last_line_type = ""
-  current_title = title
+  current_title = "Deadpool"
   current_scene = ""
   current_stage_direction = ""
   current_character = ""
@@ -235,8 +242,8 @@ PAGE_NUMBER <- RegWhy.Statement(c(
             RegWhy.Do.Detect(current_line,PAGE_NUMBER)
                              ) {
           last_line_type = "STAGE_DIRECTION"
-          print("JUNK")
-          print(current_line)
+          #print("JUNK")
+          #print(current_line)
         }
         else{
           #look for SCENE
@@ -307,7 +314,7 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                 if (last_line_type == "CHARACTER" ||
                     last_line_type == "PARENTHETICAL") {
                   last_line_type = "DIALOGUE"
-                  dialogue=RegWhy.Do.ReplaceAll(current_line, RegWhy.CharacterType.Whitespace,"")
+                  dialogue=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
                   current_dialogue = dialogue
                   
                 }
@@ -315,8 +322,9 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                 {
                   if (last_line_type == "DIALOGUE") {
                     last_line_type = "DIALOGUE"
-                    dialogue=RegWhy.Do.ReplaceAll(current_line, RegWhy.CharacterType.Whitespace,"")
-                    current_dialogue = paste(current_dialogue, dialogue)
+                    dialogue=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
+                    current_dialogue = paste(current_dialogue," ", dialogue)
+                    current_dialogue =RegWhy.Do.ReplaceAll(current_dialogue,RegWhy.Literal("  ")," ")
                     
                     
                   }
