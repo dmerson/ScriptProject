@@ -26,7 +26,7 @@ run_script <- function(title, path) {
     RegWhy.Where.EndOfString
     
   ))
-  #RegWhy.Do.Detect("      WILL",SIX_SPACES)
+ 
   
   FADE_IN_SCRIPT =RegWhy.Statement(c(
     RegWhy.CharacterType.AnyCharacter,
@@ -212,8 +212,13 @@ run_script <- function(title, path) {
               
               
               current_character = RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 1)
+              if (!is.na(RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 2))){
+                current_character_plus_direction = RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 2)
+              }
+              else{
+                current_character_plus_direction=""
+              }
               
-              current_character_plus_direction = current_line
               
             }
             else{
