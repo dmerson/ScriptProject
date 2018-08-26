@@ -36,7 +36,7 @@ SCENE <-RegWhy.Statement(c(
   RegWhy.CharacterType.BlankSpace,
   RegWhy.Count.ZeroOrMore,
   RegWhy.Group.StartCapturing,
-  RegWhy.CharacterType.CharacterRange("A-Z -."),
+  RegWhy.CharacterType.CharacterRange("A-Z0-9 -."),
   RegWhy.Count.ZeroOrMore,
   RegWhy.Group.End,
   RegWhy.CharacterType.Space,
@@ -108,25 +108,30 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     RegWhy.Count.ZeroOrMore)
   )
   
-  SCENE =RegWhy.Statement(c(
-    RegWhy.Group.StartNonCapturing,
-    RegWhy.Literal("INT"),
-    RegWhy.OrMarker,
-    RegWhy.Literal("EXT"),
-    RegWhy.Group.End,
-    RegWhy.Period,
-    RegWhy.Count.ZeroOrMore,
-    RegWhy.CharacterType.Space,
-    RegWhy.Count.OneOrMore,
-    RegWhy.Group.StartCapturing,
-    RegWhy.CharacterType.AlphaNumeric,
-    RegWhy.Count.OneOrMore,
-    RegWhy.Group.End
-    
-  ))
+  # SCENE =RegWhy.Statement(c(
+  #   RegWhy.Group.StartNonCapturing,
+  #   RegWhy.Literal("INT"),
+  #   RegWhy.OrMarker,
+  #   RegWhy.Literal("EXT"),
+  #   RegWhy.Group.End,
+  #   RegWhy.Period,
+  #   RegWhy.Count.ZeroOrMore,
+  #   RegWhy.CharacterType.Space,
+  #   RegWhy.Count.OneOrMore,
+  #   RegWhy.Group.StartCapturing,
+  #   RegWhy.CharacterType.AlphaNumeric,
+  #   RegWhy.Count.OneOrMore,
+  #   RegWhy.Group.End
+  #   
+  # ))
   
   BLANK_LINE=""
-  
+  PRECEDING_SPACE <- RegWhy.Statement(c(
+    RegWhy.Where.StartOfString,
+    RegWhy.CharacterType.Whitespace,
+    RegWhy.Count.OneOrMore
+    
+  ))
   CHARACTER <- RegWhy.Statement(c(
     RegWhy.Where.StartOfString,
     RegWhy.Group.StartCapturing,
@@ -151,7 +156,7 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     
   ))
   PARENTHETICAL <- RegWhy.Statement(c(
-    RegWhy.Where.StartOfString,
+    PRECEDING_SPACE,
     RegWhy.LeftParenthesis,
     RegWhy.CharacterType.AnyCharacter,
     RegWhy.Count.OneOrMore,
@@ -187,12 +192,7 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     RegWhy.Where.EndOfString
     
   ))
-  PRECEDING_SPACE <- RegWhy.Statement(c(
-    RegWhy.Where.StartOfString,
-    RegWhy.CharacterType.Whitespace,
-    RegWhy.Count.OneOrMore
-    
-  ))
+  
   
   last_line_type = ""
   current_title = "Deadpool"
@@ -248,8 +248,8 @@ PAGE_NUMBER <- RegWhy.Statement(c(
         else{
           #look for SCENE
           if (RegWhy.Do.Detect(current_line, SCENE)) {
-            print("SCENE")
-            print(current_line)
+            #print("SCENE")
+            #print(current_line)
             last_line_type = "SCENE"
             if (current_scene != current_line && current_scene != "") {
               current_frame <-
@@ -259,7 +259,8 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                   current_stage_direction,
                   current_character,
                   current_character_plus_direction,
-                  current_dialogue
+                  current_dialogue,
+                  stringsAsFactors = FALSE
                 )
               
               script_df <- rbind(script_df, current_frame)
@@ -285,7 +286,8 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                     current_stage_direction,
                     current_character,
                     current_character_plus_direction,
-                    current_dialogue
+                    current_dialogue,
+                    stringsAsFactors = FALSE
                   )
                  
                 script_df <- rbind(script_df, current_frame)
@@ -328,18 +330,38 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                     
                     
                   }
-                  else
+                  else # We arrive at it must be Stage Direction
                   {
+                    
+                    if (last_line_type=="DIALOGUE"){
+                      last_line_type="STAGE_DIRECTION"
+                      current_frame <-
+                        data.frame(
+                          current_title,
+                          current_scene,
+                          current_stage_direction,
+                          current_character,
+                          current_character_plus_direction,
+                          current_dialogue
+                        )
+                      
+                      script_df <- rbind(script_df, current_frame)
+                      fixed_line=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
+                      current_stage_direction <- fixed_line
+                    }
+                    
                     if (last_line_type == "BLANK_LINE") {
                       last_line_type = "STAGE_DIRECTION"
-                      
-                      current_stage_direction <- current_line
+                      fixed_line=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
+                      current_stage_direction <- fixed_line
+                      current_stage_direction <- RegWhy.Do.ReplaceAll(current_stage_direction,RegWhy.Literal("  ")," ")
                       
                     }
                     if (last_line_type == "STAGE_DIRECTION") {
                       last_line_type = "STAGE_DIRECTION"
-                      
-                      current_stage_direction <- paste(current_stage_direction,current_line)
+                      fixed_line=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
+                      current_stage_direction <- paste(current_stage_direction,fixed_line)
+                      current_stage_direction <- RegWhy.Do.ReplaceAll(current_stage_direction,RegWhy.Literal("  ")," ")
                       
                     }
                   }
@@ -355,6 +377,12 @@ PAGE_NUMBER <- RegWhy.Statement(c(
       
       
     }
+    script_df$current_title <- as.character(script_df$current_title)
+    script_df$current_scene <- as.character(script_df$current_scene)
+    script_df$current_stage_direction <- as.character(script_df$current_stage_direction)
+    script_df$current_character <- as.character(script_df$current_character)
+    script_df$current_character_plus_direction <- as.character(script_df$current_character_plus_direction)
+    script_df$current_dialogue <- as.character(script_df$current_dialogue)
   }
 #  return (script_df)
 #}
