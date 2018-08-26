@@ -3,14 +3,83 @@ if (require("RegWhy")){
   install_github("dmerson/RegWhyMultiLanguage/R/RegWhy")
 }
 library(RegWhy)
-install.packages("rvest")
+#install.packages("rvest")
 library(rvest)
+library(readr)
+library(stringi)
+library(stringr)
 
 rawHTML <- paste(readLines("Screenplays/Deadpool Script at IMSDb..html"), collapse="\n")
 deadpool_script <- read_html("Screenplays/Deadpool Script at IMSDb..html") %>%
               html_node("pre") %>%
               html_text()
 deadpool_script_lines <-read_lines(deadpool_script)
+
+scene_example="1   EXT./INT.   TAXI CAB - MORNING                                        1"
+SCENE =RegWhy.Statement(c(
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.CharacterType.Digit,
+  RegWhy.Count.OneOrMore,
+  RegWhy.Group.End,
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.Literal("INT"),
+  RegWhy.OrMarker,
+  RegWhy.Literal("EXT"),
+  RegWhy.OrMarker,
+  RegWhy.Literal("EXT./INT."),
+  RegWhy.Group.End,
+  RegWhy.Period,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.OneOrMore,
+  RegWhy.Group.StartCapturing,
+  RegWhy.CharacterType.AlphaNumericCharacterRangePlus("-."),
+  RegWhy.Count.OneOrMore,
+  RegWhy.Group.End,
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.OneOrMore,
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.CharacterType.Digit,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Group.End
+  
+))
+ts <-RegWhy.Statement(c(
+  RegWhy.Where.StartOfString,
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.CharacterType.Digit,
+  RegWhy.Count.OneOrMore,
+  RegWhy.Group.End,
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.Literal("INT"),
+  RegWhy.OrMarker,
+  RegWhy.Literal("EXT"),
+  RegWhy.OrMarker,
+  RegWhy.Literal("EXT./INT."),
+  RegWhy.Group.End,
+  RegWhy.Period,
+  RegWhy.Count.Optional,
+  RegWhy.CharacterType.BlankSpace,
+  RegWhy.Count.ZeroOrMore,
+  
+  RegWhy.Group.StartCapturing,
+  RegWhy.CharacterType.CharacterRange("A-Z -."),
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Group.End,
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.CharacterType.Digit,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Group.End,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Where.EndOfString
+))
+#RegWhy.Do.Detect("1   EXT./INT.   TAXI CAB - MORNING                                       1",ts)
 #run_script <- function(title, path) {
 #  script_lines <-readLines(path)
   start_of_script=FALSE
