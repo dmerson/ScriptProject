@@ -266,14 +266,10 @@ PAGE_NUMBER <- RegWhy.Statement(c(
           else{
             #Look for Character
             if (RegWhy.Do.Detect(current_line, CHARACTER)) {
-              print("CHARACTER")
-              print(RegWhy.Do.ExtractCapturedGroup(current_line,CHARACTER,1))
-              print(current_line)
+              #print("CHARACTER")
+              #print(RegWhy.Do.ExtractCapturedGroup(current_line,CHARACTER,1))
+              #print(current_line)
               last_line_type = "CHARACTER"
-              isCurrentCharacter=(current_character != RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 1))
-              
-              
-               
               if (current_character != RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 1)) {
                 current_frame <-
                   data.frame(
@@ -311,15 +307,16 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                 if (last_line_type == "CHARACTER" ||
                     last_line_type == "PARENTHETICAL") {
                   last_line_type = "DIALOGUE"
-                  
-                  current_dialogue = current_line
+                  dialogue=RegWhy.Do.ReplaceAll(current_line, RegWhy.CharacterType.Whitespace,"")
+                  current_dialogue = dialogue
                   
                 }
                 else
                 {
                   if (last_line_type == "DIALOGUE") {
                     last_line_type = "DIALOGUE"
-                    current_dialogue = paste(current_dialogue, current_line)
+                    dialogue=RegWhy.Do.ReplaceAll(current_line, RegWhy.CharacterType.Whitespace,"")
+                    current_dialogue = paste(current_dialogue, dialogue)
                     
                     
                   }
@@ -329,6 +326,12 @@ PAGE_NUMBER <- RegWhy.Statement(c(
                       last_line_type = "STAGE_DIRECTION"
                       
                       current_stage_direction <- current_line
+                      
+                    }
+                    if (last_line_type == "STAGE_DIRECTION") {
+                      last_line_type = "STAGE_DIRECTION"
+                      
+                      current_stage_direction <- paste(current_stage_direction,current_line)
                       
                     }
                   }
