@@ -6,6 +6,9 @@ if (require("tidytext")==FALSE){
   install.packages("tidytext")
   library(tidytext)
 }
+# install.packages("taRifx")
+# library(taRifx)
+# remove.factors()
 if (require("glue")==FALSE){
   install.packages("glue")
   library(glue)
