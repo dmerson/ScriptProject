@@ -16,37 +16,7 @@ deadpool_script <- read_html("Screenplays/Deadpool Script at IMSDb..html") %>%
 deadpool_script_lines <-read_lines(deadpool_script)
 
 scene_example="1   EXT./INT.   TAXI CAB - MORNING                                        1"
-SCENE =RegWhy.Statement(c(
-  RegWhy.Group.StartNonCapturing,
-  RegWhy.CharacterType.Digit,
-  RegWhy.Count.OneOrMore,
-  RegWhy.Group.End,
-  RegWhy.CharacterType.Space,
-  RegWhy.Count.ZeroOrMore,
-  RegWhy.Group.StartNonCapturing,
-  RegWhy.Literal("INT"),
-  RegWhy.OrMarker,
-  RegWhy.Literal("EXT"),
-  RegWhy.OrMarker,
-  RegWhy.Literal("EXT./INT."),
-  RegWhy.Group.End,
-  RegWhy.Period,
-  RegWhy.Count.ZeroOrMore,
-  RegWhy.CharacterType.Space,
-  RegWhy.Count.OneOrMore,
-  RegWhy.Group.StartCapturing,
-  RegWhy.CharacterType.AlphaNumericCharacterRangePlus("-."),
-  RegWhy.Count.OneOrMore,
-  RegWhy.Group.End,
-  RegWhy.CharacterType.Space,
-  RegWhy.Count.OneOrMore,
-  RegWhy.Group.StartNonCapturing,
-  RegWhy.CharacterType.Digit,
-  RegWhy.Count.ZeroOrMore,
-  RegWhy.Group.End
-  
-))
-ts <-RegWhy.Statement(c(
+SCENE <-RegWhy.Statement(c(
   RegWhy.Where.StartOfString,
   RegWhy.Group.StartNonCapturing,
   RegWhy.CharacterType.Digit,
@@ -65,7 +35,6 @@ ts <-RegWhy.Statement(c(
   RegWhy.Count.Optional,
   RegWhy.CharacterType.BlankSpace,
   RegWhy.Count.ZeroOrMore,
-  
   RegWhy.Group.StartCapturing,
   RegWhy.CharacterType.CharacterRange("A-Z -."),
   RegWhy.Count.ZeroOrMore,
@@ -79,7 +48,23 @@ ts <-RegWhy.Statement(c(
   RegWhy.Count.ZeroOrMore,
   RegWhy.Where.EndOfString
 ))
-#RegWhy.Do.Detect("1   EXT./INT.   TAXI CAB - MORNING                                       1",ts)
+
+PAGE_END <-RegWhy.Literal("                   Deadpool    Final Shooting Script   11/16/15")
+CONTINUED_PAGE <-RegWhy.Statement(c(
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.Literal("(CONTINUED)")
+))
+PAGE_NUMBER <- RegWhy.Statement(c(
+  RegWhy.Where.StartOfString,
+  RegWhy.CharacterType.Space,
+  RegWhy.Count.ZeroOrMore,
+  RegWhy.CharacterType.Digit,
+  RegWhy.Count.OneOrMore,
+  RegWhy.Period,
+  RegWhy.Where.EndOfString
+))
+RegWhy.Do.Detect("                                                                      17.",PAGE_NUMBER)
 #run_script <- function(title, path) {
 #  script_lines <-readLines(path)
   start_of_script=FALSE
