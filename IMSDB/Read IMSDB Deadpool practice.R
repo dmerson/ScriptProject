@@ -15,7 +15,7 @@ deadpool_script <- read_html("Screenplays/Deadpool Script at IMSDb..html") %>%
               html_text()
 deadpool_script_lines <-read_lines(deadpool_script)
 
-scene_example="1   EXT./INT.   TAXI CAB - MORNING                                        1"
+#scene_example="1   EXT./INT.   TAXI CAB - MORNING                                        1"
 SCENE <-RegWhy.Statement(c(
   RegWhy.Where.StartOfString,
   RegWhy.Group.StartNonCapturing,
@@ -51,10 +51,21 @@ SCENE <-RegWhy.Statement(c(
 
 PAGE_END <-RegWhy.Literal("                   Deadpool    Final Shooting Script   11/16/15")
 CONTINUED_PAGE <-RegWhy.Statement(c(
+  RegWhy.Group.StartNonCapturing,
+  RegWhy.CharacterType.Digit,
+  RegWhy.Count.RangeOfTimes(1,3),
+  RegWhy.Group.End,
+  RegWhy.Count.Optional,
   RegWhy.CharacterType.Space,
   RegWhy.Count.ZeroOrMore,
-  RegWhy.Literal("(CONTINUED)")
+  RegWhy.LeftParenthesis,
+  RegWhy.Count.Optional,
+  RegWhy.Literal("CONTINUED"),
+  RegWhy.RightParenthesis,
+  RegWhy.Count.Optional
 ))
+#RegWhy.Do.Detect("                                                                  (CONTINUED)",CONTINUED_PAGE)
+#RegWhy.Do.Detect("10   CONTINUED: (2)                                                         10",CONTINUED_PAGE)
 PAGE_NUMBER <- RegWhy.Statement(c(
   RegWhy.Where.StartOfString,
   RegWhy.CharacterType.Space,
@@ -64,7 +75,9 @@ PAGE_NUMBER <- RegWhy.Statement(c(
   RegWhy.Period,
   RegWhy.Where.EndOfString
 ))
-RegWhy.Do.Detect("                                                                      17.",PAGE_NUMBER)
+#RegWhy.Do.Detect("                                                                      17.",PAGE_NUMBER)
+#RegWhy.Do.Detect("10   INT.   FOYER, TOWNHOUSE - NIGHT - PAST                                  10",SCENE)
+#RegWhy.Do.ExtractCapturedGroup("10   INT.   FOYER, TOWNHOUSE - NIGHT - PAST                                  10",SCENE, 1)
 #run_script <- function(title, path) {
 #  script_lines <-readLines(path)
   start_of_script=FALSE
@@ -191,17 +204,21 @@ RegWhy.Do.Detect("                                                              
     stringsAsFactors = FALSE
   )
   #script_df <-c("","","","","")
+  script_lines=deadpool_script_lines
+  last_line_of_title_card="                         Final Shooting Script - November 16, 2015"
   len_of_script = length(script_lines)
   for (i in 1:len_of_script) {
+    #print("Current line")
     #print(script_lines[i])
-    if (RegWhy.Do.Detect(script_lines[i], FADE_IN_SCRIPT) == TRUE) {
+     
+    if (script_lines[i]==last_line_of_title_card) {
       start_of_script = TRUE
       last_line_type = "START"
       #print("Start!")
-    }
-    #if script is started
+    }    #if script is started
+    
     if ((start_of_script == TRUE) &&
-        (RegWhy.Do.Detect(script_lines[i], FADE_IN_SCRIPT) == FALSE)) {
+        (RegWhy.Do.Detect(script_lines[i], last_line_of_title_card) == FALSE)) {
       current_line <- script_lines[i]
       
       #look for Blank line
@@ -210,18 +227,22 @@ RegWhy.Do.Detect("                                                              
         
       }
       else{
-        if (RegWhy.Do.Detect(current_line, CUTS) ||
+        if (
+            RegWhy.Do.Detect(current_line, CUTS) ||
             RegWhy.Do.Detect(current_line, CAMERADIRECTION) ||
-            RegWhy.Do.Detect(current_line, TRANSISTION)) {
+            RegWhy.Do.Detect(current_line, TRANSISTION) ||
+            RegWhy.Do.Detect(current_line,CONTINUED_PAGE)  ||
+            RegWhy.Do.Detect(current_line,PAGE_NUMBER)
+                             ) {
           last_line_type = "STAGE_DIRECTION"
-          #print("Camera")
-          #print(current_line)
+          print("JUNK")
+          print(current_line)
         }
         else{
           #look for SCENE
           if (RegWhy.Do.Detect(current_line, SCENE)) {
-            #print("SCENE")
-            #print(current_line)
+            print("SCENE")
+            print(current_line)
             last_line_type = "SCENE"
             if (current_scene != current_line && current_scene != "") {
               current_frame <-
@@ -245,12 +266,14 @@ RegWhy.Do.Detect("                                                              
           else{
             #Look for Character
             if (RegWhy.Do.Detect(current_line, CHARACTER)) {
-              #print("CHARACTER")
-              #print(RegWhy.Do.ExtractCapturedGroup(current_line,CHARACTER,1))
-              #print(current_line)
+              print("CHARACTER")
+              print(RegWhy.Do.ExtractCapturedGroup(current_line,CHARACTER,1))
+              print(current_line)
               last_line_type = "CHARACTER"
+              isCurrentCharacter=(current_character != RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 1))
               
               
+               
               if (current_character != RegWhy.Do.ExtractCapturedGroup(current_line, CHARACTER, 1)) {
                 current_frame <-
                   data.frame(
@@ -261,7 +284,7 @@ RegWhy.Do.Detect("                                                              
                     current_character_plus_direction,
                     current_dialogue
                   )
-                
+                 
                 script_df <- rbind(script_df, current_frame)
                 current_stage_direction = ""
                 current_character = ""
