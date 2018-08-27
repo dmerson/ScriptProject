@@ -15,9 +15,13 @@ read_imsdb_file_into_lines <- function(path){
   script_lines <-read_lines(script)
   return (script_lines)
 }
-View(read_imsdb_file_into_lines("Screenplays/War for the Planet of the Apes Script at IMSDb..html"))
-
-#scene_example="1   EXT./INT.   TAXI CAB - MORNING                                        1"
+BLANK_LINE=""
+PRECEDING_SPACE <- RegWhy.Statement(c(
+  RegWhy.Where.StartOfString,
+  RegWhy.CharacterType.Whitespace,
+  RegWhy.Count.OneOrMore
+  
+))
 SCENE <-RegWhy.Statement(c(
   RegWhy.Where.StartOfString,
   RegWhy.Group.StartNonCapturing,
@@ -79,17 +83,7 @@ PAGE_NUMBER <- RegWhy.Statement(c(
   RegWhy.Period,
   RegWhy.Where.EndOfString
 ))
-#RegWhy.Do.Detect("                                                                      17.",PAGE_NUMBER)
-#RegWhy.Do.Detect("10   INT.   FOYER, TOWNHOUSE - NIGHT - PAST                                  10",SCENE)
-#RegWhy.Do.ExtractCapturedGroup("10   INT.   FOYER, TOWNHOUSE - NIGHT - PAST                                  10",SCENE, 1)
-#run_script <- function(title, path) {
-#  script_lines <-readLines(path)
-  start_of_script=FALSE
- 
- 
- 
-  
-  FADE_IN_SCRIPT =RegWhy.Statement(c(
+FADE_IN_SCRIPT =RegWhy.Statement(c(
     RegWhy.CharacterType.AnyCharacter,
     RegWhy.Count.ZeroOrMore,
     RegWhy.Literal("FADE IN"),
@@ -97,14 +91,22 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     RegWhy.Count.ZeroOrMore)
   )
   
+
   
   
-  BLANK_LINE=""
-  PRECEDING_SPACE <- RegWhy.Statement(c(
-    RegWhy.Where.StartOfString,
-    RegWhy.CharacterType.Whitespace,
-    RegWhy.Count.OneOrMore
-    
+  OMIT_SCENE <- RegWhy.Statement(c(
+   
+    RegWhy.Group.StartNonCapturing,
+    RegWhy.CharacterType.Digit,
+    RegWhy.Count.OneOrMore,
+    RegWhy.Group.End,
+    RegWhy.Count.Optional,
+    RegWhy.Literal("OMIT"),
+    RegWhy.Group.StartNonCapturing,
+    RegWhy.CharacterType.Digit,
+    RegWhy.Count.OneOrMore,
+    RegWhy.Group.End,
+    RegWhy.Count.Optional
   ))
   CHARACTER <- RegWhy.Statement(c(
     RegWhy.Where.StartOfString,
@@ -176,9 +178,9 @@ PAGE_NUMBER <- RegWhy.Statement(c(
     
   ))
   
-create_script_df <-function(){  
+create_script_df <-function(script_lines, current_title){  
   last_line_type = ""
-  current_title = "War for the Planet of the Apes"
+  #current_title = "War for the Planet of the Apes"
   current_scene = ""
   current_stage_direction = ""
   current_character = ""
@@ -199,19 +201,14 @@ create_script_df <-function(){
   for (i in 1:len_of_script) {
     #print("Current line")
    # print(script_lines[i])
-     
-    # if (RegWhy.Do.Detect(script_lines[i],"FADE IN")) {
-    #   start_of_script = TRUE
-    #   last_line_type = "START"
-    #   #print("Start!")
-    # }    #if script is started
+
     start_of_script=TRUE
     if ((start_of_script == TRUE) &&
         (RegWhy.Do.Detect(script_lines[i], "FADE IN") == FALSE)) {
       current_line <- script_lines[i]
       
       #look for Blank line
-      if (current_line == BLANK_LINE  ) {
+      if (current_line == BLANK_LINE || RegWhy.Do.Detect(current_line,OMIT_SCENE)  ) {
         last_line_type = "BLANK_LINE"
         
       }
@@ -314,6 +311,13 @@ create_script_df <-function(){
                   }
                   else # We arrive at it must be Stage Direction
                   {
+                    if (current_character==""){
+                      last_line_type="STAGE_DIRECTION"
+                      fixed_line=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
+                      current_stage_direction <- fixed_line
+                    }
+                    else{
+                      
                     
                     if (last_line_type=="DIALOGUE"){
                       last_line_type="STAGE_DIRECTION"
@@ -332,7 +336,7 @@ create_script_df <-function(){
                       current_stage_direction <- fixed_line
                     }
                     
-                    if (last_line_type == "BLANK_LINE") {
+                    if (last_line_type == "BLANK_LINE" ) {
                       last_line_type = "STAGE_DIRECTION"
                       fixed_line=RegWhy.Do.ReplaceFirst(current_line, PRECEDING_SPACE,"")
                       current_stage_direction <- fixed_line
@@ -345,6 +349,7 @@ create_script_df <-function(){
                       current_stage_direction <- paste(current_stage_direction,fixed_line)
                       current_stage_direction <- RegWhy.Do.ReplaceAll(current_stage_direction,RegWhy.Literal("  ")," ")
                       
+                    }
                     }
                   }
                 }
