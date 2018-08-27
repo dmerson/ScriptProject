@@ -209,6 +209,7 @@ create_script_df <-function(script_lines, current_title){
       
       #look for Blank line
       if (current_line == BLANK_LINE || RegWhy.Do.Detect(current_line,OMIT_SCENE)  ) {
+        
         last_line_type = "BLANK_LINE"
         
       }
